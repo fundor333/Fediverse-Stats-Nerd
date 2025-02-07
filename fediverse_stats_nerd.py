@@ -12,9 +12,9 @@ class Downloader:
     useragent = "FediverseStatsNerd/0.1"
 
     def __init__(self):
-        flag = not os.path.exists('temp_db.json')
+        flag = not os.path.exists("temp_db.json")
         self.db = TinyDB(
-            'temp_db.json',
+            "temp_db.json",
             sort_keys=True,
         )
         self.data = Query()
@@ -35,7 +35,11 @@ class Downloader:
             rp.read()
             flag = rp.can_fetch(self.useragent, f"{url}/.well-known/nodeinfo")
             return flag
-        except (http.client.RemoteDisconnected, urllib.error.URLError):
+        except (
+            http.client.RemoteDisconnected,
+            urllib.error.URLError,
+            UnicodeDecodeError,
+        ):
             return False
 
     def download(self, url: str, flag: str) -> dict | None:
@@ -65,8 +69,10 @@ class Downloader:
             stats = {}
             stats["users"] = data["usage"]["users"].get("total", None)
             stats["users_month"] = data["usage"]["users"].get("activeMonth", None)
-            stats["users_half_year"] = data["usage"]["users"].get("activeHalfyear", None)
-            data_tmp['stats'] = stats
+            stats["users_half_year"] = data["usage"]["users"].get(
+                "activeHalfyear", None
+            )
+            data_tmp["stats"] = stats
 
         if data.get("software") is not None:
             data_tmp["software"] = data["software"].get("name", None)
@@ -90,13 +96,13 @@ class Downloader:
         return self.db.search(self.data.done == False)
 
     def close(self):
-        os.remove('temp_db.json')
+        os.remove("temp_db.json")
 
 
 if __name__ == "__main__":
     # Read the list of instances
     d = Downloader()
-    today_s = datetime.datetime.today().strftime('%Y-%m-%d')
+    today_s = datetime.datetime.today().strftime("%Y-%m-%d")
     output = {"date_download": today_s, "data": []}
     i = 0
     results = d.get_data()  # returns a list

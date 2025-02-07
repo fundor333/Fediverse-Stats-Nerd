@@ -10,7 +10,7 @@ help: ## Show this help
 install: ## Make venv and install requirements
 	@poetry lock
 	@poetry install
-	@pre-commit autoupdate
+	@poetry run pre-commit autoupdate
 
 .PHONY: run
 run: ## Run the Django server
