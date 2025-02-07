@@ -5,8 +5,8 @@ description = "Scripts for collecting Fediverse stats"
 authors = [{ name = "Fundor333", email = "github@fundor333.com" }]
 license = { text = "CC BY-NC-SA 4.0" }
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = ["requests (>=2.32.3,<3.0.0)"]
+requires-python = ">=3.13,<4.0"
+dependencies = ["requests (>=2.32.3,<3.0.0)", "tinydb (>=4.8.2,<5.0.0)"]
 
 
 [build-system]

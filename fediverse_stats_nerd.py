@@ -4,10 +4,28 @@ import datetime
 import json
 from pathlib import Path
 import http
+from tinydb import TinyDB, Query
+import os
 
 
 class Downloader:
     useragent = "FediverseStatsNerd/0.1"
+
+    def __init__(self):
+        flag = not os.path.exists('temp_db.json')
+        self.db = TinyDB(
+            'temp_db.json',
+            sort_keys=True,
+        )
+        self.data = Query()
+
+        if flag:
+            with open("instances.txt") as f:
+                instances = f.read().splitlines()
+                for instance in instances:
+                    self.db.insert(
+                        {"site": instance, "done": False},
+                    )
 
     def check_robots(self, url: str) -> bool:
         """Check if the robots.txt file allows us to download the stats."""
@@ -65,7 +83,14 @@ class Downloader:
             url = "https://" + url
         flag = self.check_robots(url)
         data = self.download(url, flag)
+        self.db.remove(self.data.site == site_name)
         return self.elaborate_stats(data, site_name)
+
+    def get_data(self):
+        return self.db.search(self.data.done == False)
+
+    def close(self):
+        os.remove('temp_db.json')
 
 
 if __name__ == "__main__":
@@ -74,17 +99,18 @@ if __name__ == "__main__":
     today_s = datetime.datetime.today().strftime('%Y-%m-%d')
     output = {"date_download": today_s, "data": []}
     i = 0
-    with open("instances.txt") as f:
-        instances = f.read().splitlines()
-        for instance in instances:
-            stats = d.get_stats(instance)
-            i += 1
-            print("---")
-            print(f"{i}/{len(instances)}")
-            if stats is not None:
-                print(f"{stats['site']}")
-                Path(f"data/{today_s}").mkdir(parents=True, exist_ok=True)
-                filename = stats["site"].split(" ")[0].replace(".", "_")
-                with open(f"data/{today_s}/{filename}.json", "w") as f:
-                    f.write(json.dumps(stats))
-                output["data"].append(stats)
+    results = d.get_data()  # returns a list
+    for res in results:
+        instance = res["site"]
+        stats = d.get_stats(instance)
+        i += 1
+        print("---")
+        print(f"{i}/{len(results)}")
+        if stats is not None:
+            print(f"{stats['site']}")
+            Path(f"data/{today_s}").mkdir(parents=True, exist_ok=True)
+            filename = stats["site"].split(" ")[0].replace(".", "_")
+            with open(f"data/{today_s}/{filename}.json", "w") as f:
+                f.write(json.dumps(stats))
+            output["data"].append(stats)
+    d.close()
